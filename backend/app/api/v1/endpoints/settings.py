@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.dependencies import require_permission
 from app.schemas.base import APIResponse
 from app.schemas.setting import SystemSettingCreate, SystemSettingResponse
 from app.services.setting import system_setting_service
@@ -12,7 +13,10 @@ router = APIRouter()
 
 
 @router.get("", response_model=APIResponse[List[SystemSettingResponse]])
-def get_all_settings(db: Session = Depends(get_db)):
+def get_all_settings(
+    db: Session = Depends(get_db),
+    current_user = Depends(require_permission("settings:read"))
+):
     settings_list = system_setting_repository.list(db)
     return APIResponse(
         success=True,
@@ -22,7 +26,11 @@ def get_all_settings(db: Session = Depends(get_db)):
 
 
 @router.get("/{key}", response_model=APIResponse)
-def get_setting_by_key(key: str, db: Session = Depends(get_db)):
+def get_setting_by_key(
+    key: str,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_permission("settings:read"))
+):
     val = system_setting_service.get_value(db, key)
     if val is None:
         raise HTTPException(status_code=404, detail=f"Configuration key '{key}' not found.")
@@ -34,7 +42,11 @@ def get_setting_by_key(key: str, db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=APIResponse[SystemSettingResponse])
-def save_setting(payload: SystemSettingCreate, db: Session = Depends(get_db)):
+def save_setting(
+    payload: SystemSettingCreate,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_permission("settings:write"))
+):
     db_setting = system_setting_service.save_setting(db, payload)
     return APIResponse(
         success=True,

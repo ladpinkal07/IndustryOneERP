@@ -27,7 +27,10 @@ def setup_test_db():
 
 
 def test_settings_workflow():
-    headers = {"X-Tenant-ID": "test-tenant-123"}
+    headers = {
+        "X-Tenant-ID": "test-tenant-123",
+        "Authorization": "Bearer mock-user-token"
+    }
 
     # 1. Create/Save a setting via POST
     payload = {
@@ -56,4 +59,4 @@ def test_settings_workflow():
 
     # 4. Deny access if tenant header is missing
     response = client.get("/api/v1/settings")
-    assert response.status_code == 500  # Raises PermissionError mapped to 500
+    assert response.status_code == 422
