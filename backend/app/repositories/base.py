@@ -37,6 +37,25 @@ class BaseMultiTenantRepository(Generic[T]):
             .all()
         )
 
+    def count(self, db: Session) -> int:
+        """Return total count of non-deleted records for the current tenant."""
+        tenant_id = self._get_tenant_id()
+        return (
+            db.query(self.model)
+            .filter(self.model.tenant_id == tenant_id, self.model.is_deleted == False)
+            .count()
+        )
+
+    def list_paginated(self, db: Session, page: int = 1, page_size: int = 20) -> tuple:
+        """Return (items, total_count) for paginated queries."""
+        tenant_id = self._get_tenant_id()
+        base_query = db.query(self.model).filter(
+            self.model.tenant_id == tenant_id, self.model.is_deleted == False
+        )
+        total = base_query.count()
+        items = base_query.offset((page - 1) * page_size).limit(page_size).all()
+        return items, total
+
     def create(self, db: Session, obj_in_data: dict, created_by: Optional[str] = None) -> T:
         tenant_id = self._get_tenant_id()
         db_obj = self.model(**obj_in_data, tenant_id=tenant_id, created_by=created_by)

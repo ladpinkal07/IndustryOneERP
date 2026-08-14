@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
-from app.schemas.base import APIResponse
+from app.schemas.base import APIResponse, PaginationParams, build_paginated_response
 from app.schemas.setting import SystemSettingCreate, SystemSettingResponse
 from app.services.setting import system_setting_service
 from app.repositories.setting import system_setting_repository
@@ -14,13 +14,18 @@ router = APIRouter()
 
 @router.get("", response_model=APIResponse[List[SystemSettingResponse]])
 def get_all_settings(
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user = Depends(require_permission("settings:read"))
 ):
-    settings_list = system_setting_repository.list(db)
-    return APIResponse(
-        success=True,
-        data=settings_list,
+    items, total = system_setting_repository.list_paginated(
+        db, page=pagination.page, page_size=pagination.page_size
+    )
+    return build_paginated_response(
+        items=items,
+        total=total,
+        page=pagination.page,
+        page_size=pagination.page_size,
         message="System configurations loaded successfully"
     )
 
