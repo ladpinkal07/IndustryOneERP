@@ -33,6 +33,10 @@ yarn-debug.log*
 *.pem
 *.key
 
+# Application runtime logs
+logs/
+*.log
+
 # Docker & Database volume exclusions
 mysql_data/
 .docker-data/
