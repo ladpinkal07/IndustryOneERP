@@ -1,9 +1,17 @@
+import os
 from typing import List, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+# Determine active environment context dynamically
+app_env = os.getenv("APP_ENV", "development")
+env_files = [".env"]
+if app_env != "development":
+    env_files.append(f".env.{app_env}")
+
 
 class Settings(BaseSettings):
+    APP_ENV: str = "development"
     DATABASE_URL: str
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
@@ -22,7 +30,7 @@ class Settings(BaseSettings):
         return v
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=env_files,
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore"
