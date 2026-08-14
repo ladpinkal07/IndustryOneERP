@@ -19,5 +19,44 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: erp_backend_dev
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql+pymysql://root:rootpassword@db:3306/industryone_erp
+      - JWT_SECRET_KEY=9d8a2b8e3c7d6f5e4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1
+      - ALLOWED_ORIGINS=http://localhost:3000
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/workspace
+      # Exclude local cached files
+      - /workspace/app/__pycache__
+      - /workspace/.venv
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: erp_frontend_dev
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/workspace
+      # Exclude container node_modules from local overriding
+      - /workspace/node_modules
+      - /workspace/.next
+
 volumes:
   mysql_data:
