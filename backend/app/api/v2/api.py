@@ -1,12 +1,13 @@
 from fastapi import APIRouter
 from sqlalchemy import text
 from app.core.database import SessionLocal
+from app.schemas.base import APIResponse
 
 # Base version 2 composition router
 api_router = APIRouter()
 
 
-@api_router.get("/health", tags=["system"])
+@api_router.get("/health", response_model=APIResponse, tags=["system"])
 async def health_check_v2():
     db_status = "UNKNOWN"
     try:
@@ -17,13 +18,12 @@ async def health_check_v2():
     except Exception as e:
         db_status = "UNREACHABLE"
 
-    return {
-        "success": True,
-        "data": {
+    return APIResponse(
+        success=True,
+        data={
             "status": "HEALTHY" if db_status == "CONNECTED" else "UNHEALTHY",
             "version": "2.0.0",
             "database": db_status
         },
-        "message": "ERP V2 API is running and accessible",
-        "meta": None
-    }
+        message="ERP V2 API is running and accessible"
+    )

@@ -60,8 +60,10 @@ app.include_router(api_router_v2, prefix="/api/v2")
 from sqlalchemy import text
 from app.core.database import SessionLocal
 
+from app.schemas.base import APIResponse
+
 # Global health check endpoint
-@app.get("/api/v1/health", tags=["system"])
+@app.get("/api/v1/health", response_model=APIResponse, tags=["system"])
 async def health_check():
     logger.info("System health check triggered")
     db_status = "UNKNOWN"
@@ -74,16 +76,15 @@ async def health_check():
         logger.error("Database health check failed: %s", str(e))
         db_status = "UNREACHABLE"
 
-    return {
-        "success": True,
-        "data": {
+    return APIResponse(
+        success=True,
+        data={
             "status": "HEALTHY" if db_status == "CONNECTED" else "UNHEALTHY",
             "version": "1.0.0",
             "database": db_status
         },
-        "message": "ERP Backend Server is running and accessible",
-        "meta": None
-    }
+        message="ERP Backend Server is running and accessible"
+    )
 
 
 # Central exception handler for standard HTTP exceptions
