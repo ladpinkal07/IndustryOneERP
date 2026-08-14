@@ -47,4 +47,4 @@ def test_secure_route_forbidden():
     headers = {"X-Tenant-ID": "tenant-123", "Authorization": "Bearer token"}
     response = client.get("/api/v1/test-secure-admin", headers=headers)
     assert response.status_code == 403
-    assert "Permission Denied" in response.json()["detail"]
+    assert "Permission Denied" in response.json()["message"]

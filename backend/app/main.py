@@ -3,6 +3,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import settings
@@ -83,6 +84,21 @@ async def health_check():
         "message": "ERP Backend Server is running and accessible",
         "meta": None
     }
+
+
+# Central exception handler for standard HTTP exceptions
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    logger.warning("HTTP Exception raised: Status %d - %s", exc.status_code, exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "success": False,
+            "data": None,
+            "message": exc.detail,
+            "meta": None
+        }
+    )
 
 
 # Central exception handler for custom ERP exceptions
