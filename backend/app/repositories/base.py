@@ -123,6 +123,91 @@ class BaseMultiTenantRepository(Generic[T]):
         items = base_query.offset((page - 1) * page_size).limit(page_size).all()
         return items, total
 
+    def _apply_advanced_filters(self, query, criteria_list: list):
+        """Apply operator-based filter criteria to a query.
+
+        Each criterion is a dict/object with: field, operator, value.
+        Supported operators: eq, neq, contains, startswith, endswith,
+                             gt, gte, lt, lte, in, between
+        """
+        if not criteria_list:
+            return query
+
+        for criterion in criteria_list:
+            field_name = criterion.field if hasattr(criterion, "field") else criterion.get("field")
+            operator = criterion.operator if hasattr(criterion, "operator") else criterion.get("operator", "eq")
+            value = criterion.value if hasattr(criterion, "value") else criterion.get("value")
+
+            # Security: skip blocked columns
+            if field_name in BLOCKED_COLUMNS:
+                continue
+
+            col = getattr(self.model, field_name, None)
+            if col is None:
+                continue
+
+            if operator == "eq":
+                query = query.filter(col == value)
+            elif operator == "neq":
+                query = query.filter(col != value)
+            elif operator == "contains":
+                query = query.filter(col.ilike(f"%{value}%"))
+            elif operator == "startswith":
+                query = query.filter(col.ilike(f"{value}%"))
+            elif operator == "endswith":
+                query = query.filter(col.ilike(f"%{value}"))
+            elif operator == "gt":
+                query = query.filter(col > value)
+            elif operator == "gte":
+                query = query.filter(col >= value)
+            elif operator == "lt":
+                query = query.filter(col < value)
+            elif operator == "lte":
+                query = query.filter(col <= value)
+            elif operator == "in":
+                if isinstance(value, list):
+                    query = query.filter(col.in_(value))
+            elif operator == "between":
+                if isinstance(value, list) and len(value) == 2:
+                    query = query.filter(col.between(value[0], value[1]))
+
+        return query
+
+    def advanced_search(
+        self,
+        db: Session,
+        criteria_list: list = None,
+        search: Optional[str] = None,
+        sort_by: Optional[str] = None,
+        sort_order: str = "asc",
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple:
+        """Execute an advanced search query with operator-based criteria.
+
+        Returns (items, total_count).
+        """
+        tenant_id = self._get_tenant_id()
+        base_query = db.query(self.model).filter(
+            self.model.tenant_id == tenant_id, self.model.is_deleted == False
+        )
+
+        # Apply full-text search
+        base_query = self._apply_search(base_query, search)
+
+        # Apply advanced operator-based criteria
+        base_query = self._apply_advanced_filters(base_query, criteria_list or [])
+
+        # Count after filtering
+        total = base_query.count()
+
+        # Apply sorting
+        base_query = self._apply_sorting(base_query, sort_by, sort_order)
+
+        # Apply pagination
+        items = base_query.offset((page - 1) * page_size).limit(page_size).all()
+        return items, total
+
     def create(self, db: Session, obj_in_data: dict, created_by: Optional[str] = None) -> T:
         tenant_id = self._get_tenant_id()
         db_obj = self.model(**obj_in_data, tenant_id=tenant_id, created_by=created_by)

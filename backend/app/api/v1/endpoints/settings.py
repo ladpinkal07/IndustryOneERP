@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
-from app.schemas.base import APIResponse, PaginationParams, FilterSortParams, build_paginated_response
+from app.schemas.base import (
+    APIResponse,
+    PaginationParams,
+    FilterSortParams,
+    AdvancedSearchRequest,
+    build_paginated_response,
+)
 from app.schemas.setting import SystemSettingCreate, SystemSettingResponse
 from app.services.setting import system_setting_service
 from app.repositories.setting import system_setting_repository
@@ -70,4 +76,29 @@ def save_setting(
         success=True,
         data=db_setting,
         message="Configuration saved successfully"
+    )
+
+
+@router.post("/search", response_model=APIResponse[List[SystemSettingResponse]])
+def search_settings(
+    body: AdvancedSearchRequest,
+    db: Session = Depends(get_db),
+    current_user = Depends(require_permission("settings:read"))
+):
+    """Advanced search endpoint supporting operator-based criteria."""
+    items, total = system_setting_repository.advanced_search(
+        db,
+        criteria_list=body.criteria,
+        search=body.search,
+        sort_by=body.sort_by,
+        sort_order=body.sort_order,
+        page=body.page,
+        page_size=body.page_size,
+    )
+    return build_paginated_response(
+        items=items,
+        total=total,
+        page=body.page,
+        page_size=body.page_size,
+        message="Advanced search completed successfully"
     )

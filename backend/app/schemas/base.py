@@ -80,6 +80,45 @@ class APIErrorResponse(BaseModel):
     meta: Optional[dict] = Field(default_factory=dict)
 
 
+class AdvancedSearchCriteria(BaseModel):
+    """A single advanced filter condition.
+
+    Supported operators:
+        eq, neq, contains, startswith, endswith,
+        gt, gte, lt, lte, in, between
+    """
+    field: str = Field(..., description="Column name to filter on")
+    operator: str = Field(
+        "eq",
+        pattern="^(eq|neq|contains|startswith|endswith|gt|gte|lt|lte|in|between)$",
+        description="Filter operator",
+    )
+    value: Any = Field(..., description="Value or list of values for the operator")
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"field": "category", "operator": "eq", "value": "FINANCE"},
+                {"field": "setting_key", "operator": "contains", "value": "tax"},
+                {"field": "created_at", "operator": "between", "value": ["2025-01-01", "2025-12-31"]},
+                {"field": "value_type", "operator": "in", "value": ["string", "int"]},
+            ]
+        }
+    )
+
+
+class AdvancedSearchRequest(BaseModel):
+    """POST body for /search endpoints."""
+    criteria: List[AdvancedSearchCriteria] = Field(
+        default_factory=list, description="List of filter conditions (ANDed together)"
+    )
+    search: Optional[str] = Field(None, description="Full-text search keyword")
+    sort_by: Optional[str] = Field(None, description="Column to sort by")
+    sort_order: str = Field("asc", pattern="^(asc|desc)$", description="Sort direction")
+    page: int = Field(1, ge=1, description="Page number")
+    page_size: int = Field(20, ge=1, le=100, description="Items per page")
+
+
 def build_paginated_response(
     items: List,
     total: int,
