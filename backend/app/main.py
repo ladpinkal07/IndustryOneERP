@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.api.middleware.tenant import TenantResolverMiddleware
 
 app = FastAPI(
     title="IndustryOne ERP API Backend",
@@ -18,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register Multi-Tenant Isolation Middleware
+app.add_middleware(TenantResolverMiddleware)
 
 
 # Global health check endpoint
