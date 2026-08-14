@@ -17,5 +17,8 @@ class TenantContext:
         return _tenant_context.set(tenant_id)
 
     @staticmethod
-    def clear_current_tenant(token: contextvars.Token) -> None:
-        _tenant_context.reset(token)
+    def clear_current_tenant(token: Optional[contextvars.Token] = None) -> None:
+        if token is not None:
+            _tenant_context.reset(token)
+        else:
+            _tenant_context.set(None)
