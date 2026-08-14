@@ -56,15 +56,29 @@ app.include_router(api_router_v1, prefix="/api/v1")
 app.include_router(api_router_v2, prefix="/api/v2")
 
 
+from sqlalchemy import text
+from app.core.database import SessionLocal
+
 # Global health check endpoint
 @app.get("/api/v1/health", tags=["system"])
 async def health_check():
     logger.info("System health check triggered")
+    db_status = "UNKNOWN"
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db_status = "CONNECTED"
+        db.close()
+    except Exception as e:
+        logger.error("Database health check failed: %s", str(e))
+        db_status = "UNREACHABLE"
+
     return {
         "success": True,
         "data": {
-            "status": "HEALTHY",
-            "version": "1.0.0"
+            "status": "HEALTHY" if db_status == "CONNECTED" else "UNHEALTHY",
+            "version": "1.0.0",
+            "database": db_status
         },
         "message": "ERP Backend Server is running and accessible",
         "meta": None
