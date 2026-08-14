@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class SystemSettingBase(BaseModel):
@@ -23,9 +23,9 @@ class SystemSettingResponse(SystemSettingBase):
     id: str
     tenant_id: str
 
-    class Config:
-        from_attributes = True
-        json_schema_extra = {
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
             "example": {
                 "id": "set_38b97a",
                 "tenant_id": "tenant-abc",
@@ -36,3 +36,4 @@ class SystemSettingResponse(SystemSettingBase):
                 "description": "Primary operating currency"
             }
         }
+    )
