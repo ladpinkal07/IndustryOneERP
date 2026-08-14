@@ -1,10 +1,10 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_permission
-from app.schemas.base import APIResponse, PaginationParams, build_paginated_response
+from app.schemas.base import APIResponse, PaginationParams, FilterSortParams, build_paginated_response
 from app.schemas.setting import SystemSettingCreate, SystemSettingResponse
 from app.services.setting import system_setting_service
 from app.repositories.setting import system_setting_repository
@@ -15,11 +15,24 @@ router = APIRouter()
 @router.get("", response_model=APIResponse[List[SystemSettingResponse]])
 def get_all_settings(
     pagination: PaginationParams = Depends(),
+    filtering: FilterSortParams = Depends(),
+    category: Optional[str] = Query(None, description="Filter by category (exact match)"),
     db: Session = Depends(get_db),
     current_user = Depends(require_permission("settings:read"))
 ):
+    # Build exact-match filters dict from named query params
+    filters = {}
+    if category:
+        filters["category"] = category
+
     items, total = system_setting_repository.list_paginated(
-        db, page=pagination.page, page_size=pagination.page_size
+        db,
+        page=pagination.page,
+        page_size=pagination.page_size,
+        search=filtering.search,
+        sort_by=filtering.sort_by,
+        sort_order=filtering.sort_order,
+        filters=filters if filters else None,
     )
     return build_paginated_response(
         items=items,

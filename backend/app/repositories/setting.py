@@ -6,6 +6,8 @@ from app.repositories.base import BaseMultiTenantRepository
 
 
 class SystemSettingRepository(BaseMultiTenantRepository[SystemSetting]):
+    searchable_columns = ["setting_key", "setting_value", "category", "description"]
+
     def __init__(self):
         super().__init__(SystemSetting)
 

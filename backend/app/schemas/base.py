@@ -22,6 +22,27 @@ class PaginationParams:
         return (self.page - 1) * self.page_size
 
 
+class FilterSortParams:
+    """Reusable dependency for extracting filter and sort query parameters.
+
+    Usage:
+        GET /items?search=keyword&sort_by=created_at&sort_order=desc&category=FINANCE
+    """
+
+    # Columns that are never allowed for filtering/sorting (security)
+    BLOCKED_COLUMNS = frozenset({"tenant_id", "is_deleted", "deleted_at", "deleted_by"})
+
+    def __init__(
+        self,
+        search: Optional[str] = Query(None, description="Full-text search across searchable columns"),
+        sort_by: Optional[str] = Query(None, description="Column name to sort by"),
+        sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort direction: asc or desc"),
+    ):
+        self.search = search
+        self.sort_by = sort_by
+        self.sort_order = sort_order
+
+
 class ResponseMetadata(BaseModel):
     page: int
     page_size: int
