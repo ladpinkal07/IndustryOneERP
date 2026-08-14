@@ -1,0 +1,71 @@
+@import './variables.css';
+
+/* Core Theme Layout bindings */
+body {
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Card overrides */
+.card {
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Sidebar navigation styles */
+.sidebar {
+  width: 260px;
+  min-height: calc(100vh - 56px);
+  border-right: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  transition: width 0.2s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar .nav-link {
+  color: var(--text-secondary);
+  border-radius: 6px;
+  margin: 2px 0;
+  transition: all 0.15s ease;
+}
+
+.sidebar .nav-link:hover {
+  color: var(--primary-color);
+  background-color: rgba(13, 110, 253, 0.08);
+}
+
+.sidebar .nav-link.active {
+  color: #fff !important;
+  background-color: var(--primary-color) !important;
+}
+
+/* Responsive grid tables (.erp-grid) */
+.erp-grid {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.erp-grid th {
+  background-color: rgba(0, 0, 0, 0.02);
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  font-weight: 600;
+  padding: 10px 12px;
+}
+
+.erp-grid td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.erp-grid tbody tr:hover {
+  background-color: rgba(13, 110, 253, 0.04) !important;
+  cursor: pointer;
+}

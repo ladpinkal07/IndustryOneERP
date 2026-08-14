@@ -1,0 +1,27 @@
+:root {
+  /* Core brand colors */
+  --primary-color: #0d6efd;       /* Enterprise Blue */
+  --primary-hover: #0b5ed7;
+  --secondary-color: #4f46e5;     /* Indigo Accent */
+  
+  /* Status indicators */
+  --success-color: #10b981;       /* Emerald Green */
+  --warning-color: #f59e0b;       /* Amber Warning */
+  --danger-color: #ef4444;        /* Crimson Red */
+  
+  /* Light Theme Layout */
+  --bg-color: #f9fafb;
+  --card-bg: #ffffff;
+  --border-color: #e5e7eb;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+}
+
+[data-theme="dark"] {
+  /* Dark Theme Layout overrides */
+  --bg-color: #0b0f19;
+  --card-bg: #151b2a;
+  --border-color: #222e45;
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+}
