@@ -1,9 +1,10 @@
 import React from 'react';
+import ErrorState from './ErrorState';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -11,11 +12,12 @@ export class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
+    this.setState({ errorInfo });
     console.error('ErrorBoundary caught a render crash:', error, errorInfo);
   }
 
   handleReset = () => {
-    this.setState({ hasError: false, error: null });
+    this.setState({ hasError: false, error: null, errorInfo: null });
     if (this.props.onReset) {
       this.props.onReset();
     }
@@ -28,18 +30,19 @@ export class ErrorBoundary extends React.Component {
       }
 
       return (
-        <div className="card border-danger border-opacity-25 bg-danger bg-opacity-10 p-4 my-3 text-center">
-          <div className="fs-1 text-danger mb-2">⚠️</div>
-          <h5 className="fw-bold text-danger">An unexpected interface error occurred</h5>
-          <p className="text-muted small mb-3">
-            {this.state.error?.message || 'A client-side component crash was caught safely.'}
-          </p>
-          <div>
-            <button className="btn btn-outline-danger btn-sm" onClick={this.handleReset}>
-              Try Again
-            </button>
-          </div>
-        </div>
+        <ErrorState
+          statusCode={500}
+          title="Component Rendering Failure"
+          message={
+            this.state.error?.message ||
+            'An unexpected error prevented this section from rendering properly.'
+          }
+          technicalDetails={
+            this.state.error?.stack ||
+            (this.state.errorInfo ? this.state.errorInfo.componentStack : null)
+          }
+          onRetry={this.handleReset}
+        />
       );
     }
 

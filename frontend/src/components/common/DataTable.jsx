@@ -3,6 +3,7 @@ import LoadingSpinner from './LoadingSpinner';
 import Pagination from './Pagination';
 import DataTableToolbar from './DataTableToolbar';
 import TableSkeleton from './TableSkeleton';
+import EmptyState from './EmptyState';
 
 export default function DataTable({
   columns = [],
@@ -154,10 +155,13 @@ export default function DataTable({
               <tr>
                 <td
                   colSpan={columns.length + (selectable ? 1 : 0) + (expandable ? 1 : 0)}
-                  className="text-center py-5 text-muted small"
+                  className="p-0 border-0"
                 >
-                  <div className="fs-3 mb-2 opacity-50">📂</div>
-                  {emptyMessage}
+                  <EmptyState
+                    preset="no-search-results"
+                    title={emptyMessage}
+                    compact
+                  />
                 </td>
               </tr>
             ) : (
