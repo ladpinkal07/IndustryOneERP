@@ -56,6 +56,23 @@ export function AuthProvider({ children }) {
     setActiveBranchId(branchId);
   };
 
+  const hasPermission = (permission) => {
+    if (!permission) return true;
+    if (!user) return true; // Default permissive in dev/demo mode
+    if (user.role === 'admin' || user.role === 'superadmin') return true;
+    const permissions = user.permissions || [];
+    if (permissions.includes('*')) return true;
+    return permissions.includes(permission);
+  };
+
+  const hasRole = (role) => {
+    if (!role) return true;
+    if (!user) return true;
+    if (user.role === role) return true;
+    const roles = user.roles || [];
+    return roles.includes(role);
+  };
+
   const value = {
     user,
     token,
@@ -65,7 +82,9 @@ export function AuthProvider({ children }) {
     login,
     logout,
     switchTenant,
-    switchBranch
+    switchBranch,
+    hasPermission,
+    hasRole,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
