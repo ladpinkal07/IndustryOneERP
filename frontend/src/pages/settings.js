@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import Layout from '../components/layout/Layout';
 import PageHeader from '../components/layout/PageHeader';
@@ -12,23 +12,55 @@ import {
   Alert,
   Badge,
   DataTable,
-  Pagination,
-  SearchInput,
 } from '../components/common';
-import { useForm, usePagination, useDebounce } from '../hooks';
+import { useForm, useDataTable } from '../hooks';
 import settingsService from '../services/settingsService';
 import { extractErrorMessage } from '../utils/errorHandler';
 import { APP_CONFIG } from '../utils/constants';
 
 export default function SettingsPage() {
-  const [settingsList, setSettingsList] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(null);
   const [saveErrorMsg, setSaveErrorMsg] = useState(null);
-  const [search, setSearch] = useState('');
-  const debouncedSearch = useDebounce(search, 300);
 
-  const pagination = usePagination(1, 10);
+  // Column definitions for the Data Table
+  const columns = [
+    {
+      key: 'setting_key',
+      label: 'Setting Key',
+      sortable: true,
+      render: (val) => <span className="font-monospace fw-semibold text-primary">{val}</span>,
+    },
+    {
+      key: 'setting_value',
+      label: 'Value',
+      render: (val) => <span className="text-truncate d-inline-block" style={{ maxWidth: '180px' }}>{val}</span>,
+    },
+    {
+      key: 'category',
+      label: 'Category',
+      sortable: true,
+      render: (val) => <Badge variant="secondary">{val}</Badge>,
+    },
+    {
+      key: 'value_type',
+      label: 'Type',
+      render: (val) => <Badge variant="light" className="border text-dark">{val}</Badge>,
+    },
+    {
+      key: 'description',
+      label: 'Description',
+      render: (val) => <span className="text-muted small">{val || '-'}</span>,
+    },
+  ];
+
+  // Data Table State Management via useDataTable
+  const table = useDataTable({
+    fetchFn: settingsService.listSettings,
+    initialPageSize: 10,
+    columns: columns,
+    rowKey: 'id',
+    exportFilename: 'system_settings_export',
+  });
 
   // Form Management with useForm
   const form = useForm({
@@ -62,7 +94,7 @@ export default function SettingsPage() {
         await settingsService.saveSetting(values);
         setSaveSuccessMsg(`Configuration '${values.setting_key}' saved successfully!`);
         form.resetForm();
-        fetchSettings();
+        table.refetch();
       } catch (err) {
         setSaveErrorMsg(extractErrorMessage(err));
         throw err;
@@ -70,61 +102,47 @@ export default function SettingsPage() {
     },
   });
 
-  // Fetch paginated and filtered settings
-  const fetchSettings = async () => {
-    setLoading(true);
-    try {
-      const response = await settingsService.listSettings({
-        page: pagination.page,
-        page_size: pagination.pageSize,
-        search: debouncedSearch || undefined,
-      });
-
-      if (response && response.data) {
-        setSettingsList(response.data);
-        if (response.meta) {
-          pagination.setPaginationMeta(response.meta);
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching settings:', err);
-    } finally {
-      setLoading(false);
-    }
+  // Populate form for editing on row click
+  const handleEditRow = (row) => {
+    form.setValues({
+      setting_key: row.setting_key,
+      setting_value: row.setting_value,
+      value_type: row.value_type || 'string',
+      category: row.category || 'SYSTEM',
+      description: row.description || '',
+    });
+    setSaveSuccessMsg(`Loaded '${row.setting_key}' into editor.`);
   };
 
-  useEffect(() => {
-    fetchSettings();
-  }, [pagination.page, pagination.pageSize, debouncedSearch]);
-
-  const columns = [
-    {
-      key: 'setting_key',
-      label: 'Setting Key',
-      sortable: true,
-      render: (val) => <span className="font-monospace fw-semibold text-primary">{val}</span>,
-    },
-    {
-      key: 'setting_value',
-      label: 'Value',
-      render: (val) => <span className="text-truncate d-inline-block" style={{ maxWidth: '200px' }}>{val}</span>,
-    },
-    {
-      key: 'category',
-      label: 'Category',
-      render: (val) => <Badge variant="secondary">{val}</Badge>,
-    },
-    {
-      key: 'value_type',
-      label: 'Type',
-      render: (val) => <Badge variant="light" className="border text-dark">{val}</Badge>,
-    },
-    {
-      key: 'description',
-      label: 'Description',
-      render: (val) => <span className="text-muted small">{val || '-'}</span>,
-    },
-  ];
+  // Expandable row detail renderer
+  const renderRowDetails = (row) => (
+    <div className="p-2">
+      <div className="row g-2 small">
+        <div className="col-sm-6 col-md-3">
+          <span className="text-muted">Record ID:</span>{' '}
+          <code className="text-dark">{row.id}</code>
+        </div>
+        <div className="col-sm-6 col-md-3">
+          <span className="text-muted">Tenant Scope:</span>{' '}
+          <span className="badge bg-secondary-subtle text-secondary">{row.tenant_id || 'System'}</span>
+        </div>
+        <div className="col-sm-6 col-md-3">
+          <span className="text-muted">Created By:</span>{' '}
+          <span>{row.created_by || 'System Admin'}</span>
+        </div>
+        <div className="col-sm-6 col-md-3">
+          <span className="text-muted">Last Updated:</span>{' '}
+          <span>{row.updated_at || row.created_at || 'Just now'}</span>
+        </div>
+      </div>
+      {row.description && (
+        <div className="mt-2 small">
+          <span className="text-muted">Full Description:</span>{' '}
+          <span className="text-dark">{row.description}</span>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <Layout>
@@ -137,15 +155,15 @@ export default function SettingsPage() {
         title="System Settings"
         subtitle="Manage dynamic multi-tenant configuration parameters, defaults, and feature flags."
         icon="⚙️"
-        badge={<Badge variant="primary" pill>Active Config</Badge>}
+        badge={<Badge variant="primary" pill>Data Table System</Badge>}
       />
 
       <div className="row g-4">
-        {/* Left Column: Form Component System in Action */}
-        <div className="col-lg-5">
+        {/* Left Column: Form Component System */}
+        <div className="col-xl-4 col-lg-5">
           <FormSection
-            title="Create / Update Parameter"
-            subtitle="Add or modify multi-tenant key-value configurations"
+            title="Create / Edit Parameter"
+            subtitle="Add or update configuration keys"
             icon="📝"
           >
             {saveSuccessMsg && (
@@ -170,7 +188,7 @@ export default function SettingsPage() {
                 placeholder="e.g. app.tax_rate"
                 required
                 error={form.touched.setting_key && form.errors.setting_key}
-                helperText="Unique identifier key in lower-case format"
+                helperText="Unique parameter identifier"
               />
 
               <FormGrid cols={2}>
@@ -249,34 +267,54 @@ export default function SettingsPage() {
           </FormSection>
         </div>
 
-        {/* Right Column: Settings Data Grid with Search & Pagination */}
-        <div className="col-lg-7">
+        {/* Right Column: Advanced Data Table System */}
+        <div className="col-xl-8 col-lg-7">
           <div className="card shadow-sm border p-4">
-            <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-3">
-              <h6 className="fw-bold text-dark mb-0">Active Configuration Parameters</h6>
-              <div style={{ maxWidth: '240px' }}>
-                <SearchInput
-                  value={search}
-                  onChange={setSearch}
-                  placeholder="Filter keys or values..."
-                />
-              </div>
-            </div>
+            <h6 className="fw-bold text-dark mb-3">Enterprise Configuration Data Table</h6>
 
             <DataTable
-              columns={columns}
-              data={settingsList}
-              loading={loading}
+              columns={table.visibleColumns}
+              data={table.data}
+              loading={table.loading}
               emptyMessage="No system configuration parameters found."
-            />
-
-            <Pagination
-              page={pagination.page}
-              pageSize={pagination.pageSize}
-              totalRecords={pagination.totalRecords}
-              totalPages={pagination.totalPages}
-              onPageChange={pagination.setPage}
-              onPageSizeChange={pagination.setPageSize}
+              sortBy={table.sortBy}
+              sortOrder={table.sortOrder}
+              onSort={table.handleSort}
+              selectable
+              selectedIds={table.selectedIds}
+              onSelectRow={table.handleSelectRow}
+              onSelectAll={table.handleSelectAll}
+              onRowClick={handleEditRow}
+              expandable
+              expandedRowRender={renderRowDetails}
+              pagination={{
+                page: table.pagination.page,
+                pageSize: table.pagination.pageSize,
+                totalRecords: table.pagination.totalRecords,
+                totalPages: table.pagination.totalPages,
+                onPageChange: table.pagination.setPage,
+                onPageSizeChange: table.pagination.setPageSize,
+              }}
+              toolbar={{
+                search: table.search,
+                onSearchChange: table.setSearch,
+                searchPlaceholder: 'Search keys or values...',
+                hiddenColumnKeys: table.hiddenColumnKeys,
+                onToggleColumnVisibility: table.toggleColumnVisibility,
+                onExportCsv: () => table.exportCsv('settings_export.csv'),
+                onExportJson: () => table.exportJson('settings_export.json'),
+                onRefresh: table.refetch,
+                onClearSelection: table.clearSelection,
+                bulkActions: (
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    onClick={() => table.exportCsv('selected_settings.csv')}
+                  >
+                    Export Selected CSV
+                  </Button>
+                ),
+              }}
             />
           </div>
         </div>

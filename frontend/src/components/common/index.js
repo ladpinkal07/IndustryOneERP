@@ -4,6 +4,7 @@ export { default as Button } from './Button';
 export { default as CheckboxField } from './CheckboxField';
 export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as DataTable } from './DataTable';
+export { default as DataTableToolbar } from './DataTableToolbar';
 export { default as DatePickerField } from './DatePickerField';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as FormGrid } from './FormGrid';
