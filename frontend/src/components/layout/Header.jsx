@@ -1,21 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { APP_CONFIG } from '../../utils/constants';
 import CommandPalette from './CommandPalette';
 import NotificationDropdown from './NotificationDropdown';
+import ThemeCustomizer from './ThemeCustomizer';
 
 export default function Header({ onMobileSidebarToggle, isSidebarCollapsed, onToggleSidebar }) {
   const { user, activeTenantId, activeBranchId, switchTenant, switchBranch, logout } = useAuth();
-  const [theme, setTheme] = useState('light');
+  const { mode, toggleMode, openCustomizer } = useTheme();
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // Initialize theme from storage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('app-theme') || 'light';
-    setTheme(savedTheme);
-    document.documentElement.setAttribute('data-theme', savedTheme);
-  }, []);
 
   // Listen for Ctrl+K or Cmd+K global shortcuts
   useEffect(() => {
@@ -28,13 +23,6 @@ export default function Header({ onMobileSidebarToggle, isSidebarCollapsed, onTo
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const toggleTheme = () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
-    localStorage.setItem('app-theme', nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
-  };
 
   const displayName = user?.name || user?.username || 'System Administrator';
   const displayRole = user?.role || 'Enterprise Admin';
@@ -140,14 +128,24 @@ export default function Header({ onMobileSidebarToggle, isSidebarCollapsed, onTo
             {/* Notification Center */}
             <NotificationDropdown />
 
-            {/* Dark / Light Theme Toggle */}
+            {/* Theme Customizer Trigger */}
             <button
               className="btn btn-sm btn-outline-secondary border-0 rounded-circle p-2"
-              onClick={toggleTheme}
-              title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+              onClick={openCustomizer}
+              title="Customize Theme & Appearance"
+              aria-label="Theme Customizer"
+            >
+              🎨
+            </button>
+
+            {/* Dark / Light Theme Quick Toggle */}
+            <button
+              className="btn btn-sm btn-outline-secondary border-0 rounded-circle p-2"
+              onClick={toggleMode}
+              title={mode === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
               aria-label="Toggle color theme"
             >
-              {theme === 'light' ? '🌙' : '☀️'}
+              {mode === 'dark' ? '🌙' : '☀️'}
             </button>
 
             {/* User Profile Menu */}
@@ -202,6 +200,9 @@ export default function Header({ onMobileSidebarToggle, isSidebarCollapsed, onTo
         isOpen={isCommandPaletteOpen}
         onClose={() => setIsCommandPaletteOpen(false)}
       />
+
+      {/* Theme Customizer Drawer */}
+      <ThemeCustomizer />
     </>
   );
 }

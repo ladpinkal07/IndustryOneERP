@@ -2,6 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import '../styles/custom.css';
 import { useEffect } from 'react';
 import { AuthProvider } from '../context/AuthContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import { BreadcrumbProvider } from '../context/BreadcrumbContext';
 import { ModalProvider } from '../context/ModalContext';
 import { NotificationProvider } from '../context/NotificationContext';
@@ -15,15 +16,17 @@ function MyApp({ Component, pageProps }) {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <BreadcrumbProvider>
-          <ModalProvider>
-            <NotificationProvider>
-              <Component {...pageProps} />
-            </NotificationProvider>
-          </ModalProvider>
-        </BreadcrumbProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <BreadcrumbProvider>
+            <ModalProvider>
+              <NotificationProvider>
+                <Component {...pageProps} />
+              </NotificationProvider>
+            </ModalProvider>
+          </BreadcrumbProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
