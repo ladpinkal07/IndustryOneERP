@@ -12,15 +12,26 @@ import {
   Alert,
   Badge,
   DataTable,
+  Drawer,
+  Modal,
 } from '../components/common';
-import { useForm, useDataTable } from '../hooks';
+import { useForm, useDataTable, useModal } from '../hooks';
 import settingsService from '../services/settingsService';
 import { extractErrorMessage } from '../utils/errorHandler';
 import { APP_CONFIG } from '../utils/constants';
 
 export default function SettingsPage() {
+  const { confirm } = useModal();
   const [saveSuccessMsg, setSaveSuccessMsg] = useState(null);
   const [saveErrorMsg, setSaveErrorMsg] = useState(null);
+
+  // Drawer Inspection State
+  const [inspectDrawerOpen, setInspectDrawerOpen] = useState(false);
+  const [inspectedSetting, setInspectedSetting] = useState(null);
+
+  // Advanced Search Modal State
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [searchCategory, setSearchCategory] = useState('');
 
   // Column definitions for the Data Table
   const columns = [
@@ -47,9 +58,23 @@ export default function SettingsPage() {
       render: (val) => <Badge variant="light" className="border text-dark">{val}</Badge>,
     },
     {
-      key: 'description',
-      label: 'Description',
-      render: (val) => <span className="text-muted small">{val || '-'}</span>,
+      key: 'actions',
+      label: 'Actions',
+      align: 'right',
+      render: (_, row) => (
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          onClick={(e) => {
+            e.stopPropagation();
+            setInspectedSetting(row);
+            setInspectDrawerOpen(true);
+          }}
+          title="Inspect in Drawer"
+        >
+          👁️ Inspect
+        </Button>
+      ),
     },
   ];
 
@@ -102,6 +127,23 @@ export default function SettingsPage() {
     },
   });
 
+  // Handle Form Reset with Confirmation Dialog
+  const handleResetWithConfirm = () => {
+    if (!form.isDirty) {
+      form.resetForm();
+      return;
+    }
+    confirm({
+      title: 'Reset Configuration Form?',
+      message: 'You have unsaved form changes. Are you sure you want to discard your edits?',
+      confirmText: 'Discard Changes',
+      confirmVariant: 'warning',
+      onConfirm: () => {
+        form.resetForm();
+      },
+    });
+  };
+
   // Populate form for editing on row click
   const handleEditRow = (row) => {
     form.setValues({
@@ -114,36 +156,6 @@ export default function SettingsPage() {
     setSaveSuccessMsg(`Loaded '${row.setting_key}' into editor.`);
   };
 
-  // Expandable row detail renderer
-  const renderRowDetails = (row) => (
-    <div className="p-2">
-      <div className="row g-2 small">
-        <div className="col-sm-6 col-md-3">
-          <span className="text-muted">Record ID:</span>{' '}
-          <code className="text-dark">{row.id}</code>
-        </div>
-        <div className="col-sm-6 col-md-3">
-          <span className="text-muted">Tenant Scope:</span>{' '}
-          <span className="badge bg-secondary-subtle text-secondary">{row.tenant_id || 'System'}</span>
-        </div>
-        <div className="col-sm-6 col-md-3">
-          <span className="text-muted">Created By:</span>{' '}
-          <span>{row.created_by || 'System Admin'}</span>
-        </div>
-        <div className="col-sm-6 col-md-3">
-          <span className="text-muted">Last Updated:</span>{' '}
-          <span>{row.updated_at || row.created_at || 'Just now'}</span>
-        </div>
-      </div>
-      {row.description && (
-        <div className="mt-2 small">
-          <span className="text-muted">Full Description:</span>{' '}
-          <span className="text-dark">{row.description}</span>
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <Layout>
       <Head>
@@ -155,7 +167,17 @@ export default function SettingsPage() {
         title="System Settings"
         subtitle="Manage dynamic multi-tenant configuration parameters, defaults, and feature flags."
         icon="⚙️"
-        badge={<Badge variant="primary" pill>Data Table System</Badge>}
+        badge={<Badge variant="primary" pill>Modal & Drawer System</Badge>}
+        actions={
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            startIcon={<span>🔍</span>}
+            onClick={() => setSearchModalOpen(true)}
+          >
+            Advanced Filter Modal
+          </Button>
+        }
       />
 
       <div className="row g-4">
@@ -248,8 +270,8 @@ export default function SettingsPage() {
                   variant="outline-secondary"
                   size="sm"
                   type="button"
-                  onClick={() => form.resetForm()}
-                  disabled={!form.isDirty || form.isSubmitting}
+                  onClick={handleResetWithConfirm}
+                  disabled={form.isSubmitting}
                 >
                   Reset
                 </Button>
@@ -285,8 +307,6 @@ export default function SettingsPage() {
               onSelectRow={table.handleSelectRow}
               onSelectAll={table.handleSelectAll}
               onRowClick={handleEditRow}
-              expandable
-              expandedRowRender={renderRowDetails}
               pagination={{
                 page: table.pagination.page,
                 pageSize: table.pagination.pageSize,
@@ -319,6 +339,136 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Slide-Out Detail Inspection Drawer */}
+      <Drawer
+        isOpen={inspectDrawerOpen}
+        onClose={() => setInspectDrawerOpen(false)}
+        title="Parameter Inspection"
+        subtitle={inspectedSetting?.setting_key}
+        icon="🔍"
+        size="md"
+        footer={
+          <div className="d-flex justify-content-between align-items-center w-100">
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={() => {
+                if (inspectedSetting) {
+                  handleEditRow(inspectedSetting);
+                  setInspectDrawerOpen(false);
+                }
+              }}
+            >
+              Load in Editor ✏️
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setInspectDrawerOpen(false)}>
+              Close Drawer
+            </Button>
+          </div>
+        }
+      >
+        {inspectedSetting && (
+          <div className="d-flex flex-column gap-3">
+            <div className="p-3 bg-light-subtle rounded border">
+              <div className="text-secondary small fw-medium text-uppercase mb-1">Configuration Key</div>
+              <div className="font-monospace fw-bold fs-5 text-primary">{inspectedSetting.setting_key}</div>
+            </div>
+
+            <div className="row g-2">
+              <div className="col-6">
+                <div className="p-3 border rounded">
+                  <div className="text-muted small">Category</div>
+                  <div className="fw-semibold mt-1">
+                    <Badge variant="secondary">{inspectedSetting.category}</Badge>
+                  </div>
+                </div>
+              </div>
+              <div className="col-6">
+                <div className="p-3 border rounded">
+                  <div className="text-muted small">Value Type</div>
+                  <div className="fw-semibold mt-1">
+                    <Badge variant="light" className="border text-dark">{inspectedSetting.value_type}</Badge>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-3 border rounded">
+              <div className="text-muted small mb-1">Configured Value</div>
+              <div className="p-2 bg-body-tertiary rounded font-monospace small border">
+                {inspectedSetting.setting_value}
+              </div>
+            </div>
+
+            <div className="p-3 border rounded">
+              <div className="text-muted small mb-1">Description</div>
+              <div className="text-dark small">{inspectedSetting.description || 'No description provided.'}</div>
+            </div>
+
+            <div className="p-3 border rounded bg-body-tertiary">
+              <div className="text-muted small mb-2 fw-semibold">Audit & Multi-Tenant Metadata</div>
+              <div className="d-flex flex-column gap-1 small text-secondary">
+                <div>Tenant Scope: <strong>{inspectedSetting.tenant_id || 'System Global'}</strong></div>
+                <div>Record ID: <code>{inspectedSetting.id}</code></div>
+                <div>Created At: {inspectedSetting.created_at || 'Preloaded'}</div>
+                <div>Last Updated: {inspectedSetting.updated_at || 'N/A'}</div>
+              </div>
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Advanced Search Modal */}
+      <Modal
+        isOpen={searchModalOpen}
+        onClose={() => setSearchModalOpen(false)}
+        title="Advanced Parameter Filter"
+        subtitle="Filter system settings by category and type"
+        icon="🔍"
+        size="md"
+        footer={
+          <div className="d-flex justify-content-end gap-2 w-100">
+            <Button
+              variant="outline-secondary"
+              size="sm"
+              onClick={() => {
+                setSearchCategory('');
+                table.setFilters({});
+                setSearchModalOpen(false);
+              }}
+            >
+              Clear Filters
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                table.setFilters({ category: searchCategory || undefined });
+                setSearchModalOpen(false);
+              }}
+            >
+              Apply Filter
+            </Button>
+          </div>
+        }
+      >
+        <div className="p-2">
+          <SelectField
+            label="Filter by Category"
+            value={searchCategory}
+            onChange={(e) => setSearchCategory(e.target.value)}
+            options={[
+              { value: '', label: 'All Categories' },
+              { value: 'SYSTEM', label: 'SYSTEM' },
+              { value: 'FINANCE', label: 'FINANCE' },
+              { value: 'INVENTORY', label: 'INVENTORY' },
+              { value: 'MANUFACTURING', label: 'MANUFACTURING' },
+            ]}
+            helperText="Narrow down results to a specific functional category"
+          />
+        </div>
+      </Modal>
     </Layout>
   );
 }

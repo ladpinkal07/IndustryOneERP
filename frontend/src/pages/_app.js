@@ -3,6 +3,7 @@ import '../styles/custom.css';
 import { useEffect } from 'react';
 import { AuthProvider } from '../context/AuthContext';
 import { BreadcrumbProvider } from '../context/BreadcrumbContext';
+import { ModalProvider } from '../context/ModalContext';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 
 function MyApp({ Component, pageProps }) {
@@ -15,7 +16,9 @@ function MyApp({ Component, pageProps }) {
     <ErrorBoundary>
       <AuthProvider>
         <BreadcrumbProvider>
-          <Component {...pageProps} />
+          <ModalProvider>
+            <Component {...pageProps} />
+          </ModalProvider>
         </BreadcrumbProvider>
       </AuthProvider>
     </ErrorBoundary>

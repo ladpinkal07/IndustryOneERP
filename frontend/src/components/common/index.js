@@ -6,6 +6,7 @@ export { default as ConfirmDialog } from './ConfirmDialog';
 export { default as DataTable } from './DataTable';
 export { default as DataTableToolbar } from './DataTableToolbar';
 export { default as DatePickerField } from './DatePickerField';
+export { default as Drawer } from './Drawer';
 export { default as ErrorBoundary } from './ErrorBoundary';
 export { default as FormGrid } from './FormGrid';
 export { default as FormSection } from './FormSection';
