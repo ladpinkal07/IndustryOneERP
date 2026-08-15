@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import LoadingSpinner from './LoadingSpinner';
 import Pagination from './Pagination';
 import DataTableToolbar from './DataTableToolbar';
+import TableSkeleton from './TableSkeleton';
 
 export default function DataTable({
   columns = [],
@@ -22,6 +23,8 @@ export default function DataTable({
   expandable = false,
   expandedRowRender = null,
   stickyHeader = false,
+  useSkeleton = true,
+  skeletonRows = 5,
   className = '',
 }) {
   const [expandedRows, setExpandedRows] = useState({});
@@ -42,6 +45,19 @@ export default function DataTable({
       [rowId]: !prev[rowId],
     }));
   };
+
+  // If initial load with no data and useSkeleton enabled, render TableSkeleton
+  if (loading && data.length === 0 && useSkeleton) {
+    return (
+      <div className={`data-table-container ${className}`}>
+        <TableSkeleton
+          rows={skeletonRows}
+          columns={columns.length + (selectable ? 1 : 0) + (expandable ? 1 : 0)}
+          showToolbar={!!toolbar}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className={`data-table-container ${className}`}>
