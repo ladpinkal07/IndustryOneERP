@@ -19,6 +19,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     GEMINI_API_KEY: str = ""
 
+    # Logging configuration
+    LOG_LEVEL: str = "INFO"
+    LOG_FORMAT_JSON: bool = False
+
     # CORS configuration
     ALLOWED_ORIGINS: Union[str, List[str]] = "http://localhost:3000"
 

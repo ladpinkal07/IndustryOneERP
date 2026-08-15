@@ -1,4 +1,5 @@
 import time
+import uuid
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -8,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.config import settings
 from app.api.middleware.tenant import TenantResolverMiddleware
-from app.core.logging import logger
+from app.core.logging import logger, set_request_id, clear_request_id
 from app.core.exceptions import ERPException
 from app.api.v1.api import api_router as api_router_v1
 from app.api.v2.api import api_router as api_router_v2
@@ -33,23 +34,31 @@ app.add_middleware(
 app.add_middleware(TenantResolverMiddleware)
 
 
-# Request Logging Middleware (logs access metrics)
+# Request Logging Middleware (logs access metrics and maintains correlation context)
 @app.middleware("http")
 async def request_logger_middleware(request: Request, call_next) -> Response:
+    request_id = request.headers.get("X-Request-ID") or f"req_{uuid.uuid4().hex[:12]}"
+    token = set_request_id(request_id)
     start_time = time.time()
-    response = await call_next(request)
-    duration = time.time() - start_time
-    
-    # Log access request data
-    logger.info(
-        "Request: %s %s - Status: %d - Duration: %.4fs - Client: %s",
-        request.method,
-        request.url.path,
-        response.status_code,
-        duration,
-        request.client.host if request.client else "unknown"
-    )
-    return response
+    try:
+        response = await call_next(request)
+        duration = time.time() - start_time
+        
+        # Propagate request/correlation ID to client response headers
+        response.headers["X-Request-ID"] = request_id
+        
+        # Log access request data
+        logger.info(
+            "Request: %s %s - Status: %d - Duration: %.4fs - Client: %s",
+            request.method,
+            request.url.path,
+            response.status_code,
+            duration,
+            request.client.host if request.client else "unknown"
+        )
+        return response
+    finally:
+        clear_request_id(token)
 
 
 # Register API Routers
