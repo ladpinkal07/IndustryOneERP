@@ -1,4 +1,5 @@
 export * from './useApi';
+export * from './useBreakpoint';
 export * from './useDataTable';
 export * from './useDebounce';
 export * from './useForm';

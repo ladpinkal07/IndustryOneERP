@@ -178,3 +178,94 @@ body {
   }
 }
 
+/* Responsive Design System Utilities */
+@media (max-width: 767.98px) {
+  /* Mobile padding & touch targets */
+  .btn, .form-control, .form-select {
+    min-height: 40px;
+  }
+
+  .card {
+    border-radius: 6px;
+  }
+
+  .card-body {
+    padding: 1rem !important;
+  }
+
+  /* Table horizontal scroll indication on mobile */
+  .table-responsive {
+    -webkit-overflow-scrolling: touch;
+    border-radius: 6px;
+  }
+
+  .drawer-panel {
+    width: 100vw !important;
+  }
+
+  .modal-dialog {
+    margin: 0.5rem;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  /* Tablet optimization */
+  .sidebar {
+    width: 220px;
+  }
+}
+
+@media (min-width: 1400px) {
+  /* Ultrawide screen layout density */
+  .container-fluid {
+    max-width: 1920px;
+    margin: 0 auto;
+  }
+}
+
+/* Print Stylesheet for ERP Invoices & Reports */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 11pt;
+  }
+
+  .sidebar,
+  .header,
+  .footer,
+  .data-table-toolbar,
+  .pagination,
+  .btn,
+  .toast-container,
+  .modal-backdrop,
+  .drawer-panel {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .table th,
+  .table td {
+    border: 1px solid #ddd !important;
+    color: #000 !important;
+    background-color: transparent !important;
+  }
+}
+
+
