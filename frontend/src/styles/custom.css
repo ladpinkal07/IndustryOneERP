@@ -4,14 +4,16 @@
 body {
   background-color: var(--bg-color);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   transition: background-color 0.2s ease, color 0.2s ease;
+  min-height: 100vh;
 }
 
 /* Card overrides */
 .card {
   background-color: var(--card-bg) !important;
   border: 1px solid var(--border-color) !important;
+  border-radius: 8px;
 }
 
 /* Sidebar navigation styles */
@@ -21,10 +23,15 @@ body {
   border-right: 1px solid var(--border-color);
   background-color: var(--card-bg);
   transition: width 0.2s ease;
+  flex-shrink: 0;
 }
 
 .sidebar.collapsed {
-  width: 70px;
+  width: 72px;
+}
+
+.sidebar.collapsed .sidebar-heading {
+  display: none;
 }
 
 .sidebar .nav-link {
@@ -32,6 +39,7 @@ body {
   border-radius: 6px;
   margin: 2px 0;
   transition: all 0.15s ease;
+  font-weight: 500;
 }
 
 .sidebar .nav-link:hover {
@@ -44,10 +52,49 @@ body {
   background-color: var(--primary-color) !important;
 }
 
+/* Mobile Offcanvas Drawer */
+.offcanvas {
+  background-color: var(--card-bg) !important;
+  color: var(--text-primary) !important;
+}
+
+.offcanvas-header {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+/* Page Header & Breadcrumbs */
+.page-header {
+  padding-bottom: 0.5rem;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  content: "›";
+  color: var(--text-secondary);
+}
+
+/* Footer styling */
+.footer {
+  background-color: var(--card-bg) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* Form controls & inputs */
+.form-control, .form-select {
+  border-color: var(--border-color);
+  background-color: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
 /* Responsive grid tables (.erp-grid) */
 .erp-grid {
   border-collapse: separate;
   border-spacing: 0;
+  width: 100%;
 }
 
 .erp-grid th {
@@ -55,11 +102,11 @@ body {
   color: var(--text-primary);
   border-bottom: 2px solid var(--border-color);
   font-weight: 600;
-  padding: 10px 12px;
+  padding: 10px 14px;
 }
 
 .erp-grid td {
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-secondary);
   vertical-align: middle;
