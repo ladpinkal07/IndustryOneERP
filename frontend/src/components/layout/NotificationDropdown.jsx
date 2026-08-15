@@ -1,46 +1,16 @@
-import React, { useState } from 'react';
+import React from 'react';
 import Badge from '../common/Badge';
-
-const INITIAL_NOTIFICATIONS = [
-  {
-    id: 1,
-    title: 'Database Connection Verified',
-    message: 'MySQL pool latency 1.2ms (Healthy)',
-    time: '2m ago',
-    type: 'success',
-    read: false,
-  },
-  {
-    id: 2,
-    title: 'Schema Migration v1 Applied',
-    message: 'System settings table initialized',
-    time: '15m ago',
-    type: 'info',
-    read: false,
-  },
-  {
-    id: 3,
-    title: 'Multi-Tenant Isolation Active',
-    message: 'Tenant context bound successfully',
-    time: '1h ago',
-    type: 'primary',
-    read: true,
-  },
-];
+import { useNotification } from '../../context/NotificationContext';
 
 export default function NotificationDropdown() {
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+  const {
+    notifications,
+    markAllNotificationsAsRead,
+    removeNotification,
+    clearAllNotifications,
+  } = useNotification();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
-
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
-
-  const removeNotification = (id, e) => {
-    e.stopPropagation();
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
 
   return (
     <div className="dropdown">
@@ -73,7 +43,7 @@ export default function NotificationDropdown() {
           {unreadCount > 0 && (
             <button
               className="btn btn-link btn-sm text-primary p-0 text-decoration-none small"
-              onClick={markAllAsRead}
+              onClick={markAllNotificationsAsRead}
             >
               Mark all read
             </button>
@@ -104,9 +74,12 @@ export default function NotificationDropdown() {
                   type="button"
                   className="btn-close ms-1"
                   style={{ width: '8px', height: '8px' }}
-                  onClick={(e) => removeNotification(item.id, e)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeNotification(item.id);
+                  }}
                   aria-label="Dismiss notification"
-                ></button>
+                />
               </div>
             ))
           )}
@@ -116,7 +89,7 @@ export default function NotificationDropdown() {
         <li className="text-center py-2 bg-body-tertiary">
           <button
             className="btn btn-link btn-sm text-muted text-decoration-none small p-0"
-            onClick={() => setNotifications([])}
+            onClick={clearAllNotifications}
           >
             Clear all notifications
           </button>

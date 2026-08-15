@@ -9,21 +9,19 @@ import {
   SelectField,
   TextareaField,
   Button,
-  Alert,
   Badge,
   DataTable,
   Drawer,
   Modal,
 } from '../components/common';
-import { useForm, useDataTable, useModal } from '../hooks';
+import { useForm, useDataTable, useModal, useToast } from '../hooks';
 import settingsService from '../services/settingsService';
 import { extractErrorMessage } from '../utils/errorHandler';
 import { APP_CONFIG } from '../utils/constants';
 
 export default function SettingsPage() {
   const { confirm } = useModal();
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState(null);
-  const [saveErrorMsg, setSaveErrorMsg] = useState(null);
+  const toast = useToast();
 
   // Drawer Inspection State
   const [inspectDrawerOpen, setInspectDrawerOpen] = useState(false);
@@ -113,15 +111,16 @@ export default function SettingsPage() {
       },
     },
     onSubmit: async (values) => {
-      setSaveSuccessMsg(null);
-      setSaveErrorMsg(null);
       try {
         await settingsService.saveSetting(values);
-        setSaveSuccessMsg(`Configuration '${values.setting_key}' saved successfully!`);
+        toast.success(`Configuration '${values.setting_key}' saved successfully!`, {
+          title: 'Setting Saved',
+        });
         form.resetForm();
         table.refetch();
       } catch (err) {
-        setSaveErrorMsg(extractErrorMessage(err));
+        const errMsg = extractErrorMessage(err);
+        toast.error(errMsg, { title: 'Save Failed' });
         throw err;
       }
     },
@@ -140,6 +139,7 @@ export default function SettingsPage() {
       confirmVariant: 'warning',
       onConfirm: () => {
         form.resetForm();
+        toast.info('Form changes cleared.');
       },
     });
   };
@@ -153,7 +153,7 @@ export default function SettingsPage() {
       category: row.category || 'SYSTEM',
       description: row.description || '',
     });
-    setSaveSuccessMsg(`Loaded '${row.setting_key}' into editor.`);
+    toast.info(`Loaded '${row.setting_key}' into editor.`);
   };
 
   return (
@@ -167,7 +167,7 @@ export default function SettingsPage() {
         title="System Settings"
         subtitle="Manage dynamic multi-tenant configuration parameters, defaults, and feature flags."
         icon="⚙️"
-        badge={<Badge variant="primary" pill>Modal & Drawer System</Badge>}
+        badge={<Badge variant="primary" pill>Notification / Toast System</Badge>}
         actions={
           <Button
             variant="outline-secondary"
@@ -188,18 +188,6 @@ export default function SettingsPage() {
             subtitle="Add or update configuration keys"
             icon="📝"
           >
-            {saveSuccessMsg && (
-              <Alert variant="success" dismissible onDismiss={() => setSaveSuccessMsg(null)}>
-                {saveSuccessMsg}
-              </Alert>
-            )}
-
-            {saveErrorMsg && (
-              <Alert variant="danger" dismissible onDismiss={() => setSaveErrorMsg(null)}>
-                {saveErrorMsg}
-              </Alert>
-            )}
-
             <form onSubmit={form.handleSubmit} noValidate>
               <InputField
                 label="Configuration Key"
@@ -321,15 +309,27 @@ export default function SettingsPage() {
                 searchPlaceholder: 'Search keys or values...',
                 hiddenColumnKeys: table.hiddenColumnKeys,
                 onToggleColumnVisibility: table.toggleColumnVisibility,
-                onExportCsv: () => table.exportCsv('settings_export.csv'),
-                onExportJson: () => table.exportJson('settings_export.json'),
-                onRefresh: table.refetch,
+                onExportCsv: () => {
+                  table.exportCsv('settings_export.csv');
+                  toast.success('Exported settings to CSV', { title: 'Export Complete' });
+                },
+                onExportJson: () => {
+                  table.exportJson('settings_export.json');
+                  toast.success('Exported settings to JSON', { title: 'Export Complete' });
+                },
+                onRefresh: () => {
+                  table.refetch();
+                  toast.info('Settings refreshed', { duration: 2000 });
+                },
                 onClearSelection: table.clearSelection,
                 bulkActions: (
                   <Button
                     variant="outline-primary"
                     size="sm"
-                    onClick={() => table.exportCsv('selected_settings.csv')}
+                    onClick={() => {
+                      table.exportCsv('selected_settings.csv');
+                      toast.success(`Exported ${table.selectedIds.length} selected items to CSV.`);
+                    }}
                   >
                     Export Selected CSV
                   </Button>
@@ -436,6 +436,7 @@ export default function SettingsPage() {
                 setSearchCategory('');
                 table.setFilters({});
                 setSearchModalOpen(false);
+                toast.info('Cleared category filters');
               }}
             >
               Clear Filters
@@ -446,6 +447,7 @@ export default function SettingsPage() {
               onClick={() => {
                 table.setFilters({ category: searchCategory || undefined });
                 setSearchModalOpen(false);
+                toast.success(`Filter applied: ${searchCategory || 'All'}`);
               }}
             >
               Apply Filter
