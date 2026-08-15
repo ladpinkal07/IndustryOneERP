@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Layout from '../components/layout/Layout';
 import PageHeader from '../components/layout/PageHeader';
-import Badge from '../components/common/Badge';
+import { Badge, StatCard, Button, Alert } from '../components/common';
 import { useAuth } from '../context/AuthContext';
 import { APP_CONFIG } from '../utils/constants';
 
@@ -43,75 +43,73 @@ export default function Home() {
         icon="📊"
         badge={<Badge variant="primary" pill>Live Overview</Badge>}
         actions={
-          <button
-            className="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+          <Button
+            variant="outline-primary"
+            size="sm"
+            startIcon={<span>🔄</span>}
             onClick={() => window.location.reload()}
           >
-            🔄 Refresh Metrics
-          </button>
+            Refresh Metrics
+          </Button>
         }
       />
 
-      {/* Tenant Context Notification */}
-      <div className="alert alert-primary border-0 shadow-sm d-flex align-items-center justify-content-between mb-4">
-        <div className="d-flex align-items-center gap-2">
-          <span className="fs-5">🏢</span>
+      {/* Tenant Context Alert Banner */}
+      <Alert
+        variant="primary"
+        icon={false}
+        customIcon="🏢"
+        className="mb-4"
+      >
+        <div className="d-flex justify-content-between align-items-center w-100">
           <div>
-            <span className="fw-semibold">Active Tenant Context:</span>{' '}
-            <span className="font-monospace">{activeTenantId || 'demo-corp'}</span>
+            <span className="fw-semibold">Active Tenant Isolation Scope:</span>{' '}
+            <span className="font-monospace fw-bold">{activeTenantId || 'demo-corp'}</span>
             {activeBranchId && (
               <span className="ms-2 badge bg-primary text-white">
-                Branch: {activeBranchId}
+                Facility: {activeBranchId}
               </span>
             )}
           </div>
+          <Badge variant="success" pill>Encrypted Partition</Badge>
         </div>
-        <Badge variant="success" pill>Tenant Isolated</Badge>
-      </div>
+      </Alert>
 
-      {/* Integration Telemetry Cards */}
+      {/* KPI & Telemetry StatCards */}
       <div className="row g-3 mb-4">
         <div className="col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100 p-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium text-uppercase">FastAPI Core API</span>
-              <Badge variant={healthData?.status === 'HEALTHY' ? 'success' : 'danger'} pill>
-                {healthLoading ? 'Checking...' : healthData?.status || 'OFFLINE'}
-              </Badge>
-            </div>
-            <div className="h4 fw-bold text-dark mb-1">Port 8000</div>
-            <div className="text-muted small">
-              API Version: {healthData?.version || '1.0.0'} &bull; Base: <code>/api/v1</code>
-            </div>
-          </div>
+          <StatCard
+            title="FastAPI REST Engine"
+            value="Port 8000"
+            subtitle={`API v${healthData?.version || '1.0.0'} • Status: ${healthData?.status || 'OFFLINE'}`}
+            icon="⚡"
+            variant="primary"
+            trend={{ value: 'Healthy', isPositive: healthData?.status === 'HEALTHY' }}
+            loading={healthLoading}
+          />
         </div>
 
         <div className="col-md-6 col-xl-4">
-          <div className="card shadow-sm h-100 p-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium text-uppercase">Database Connection</span>
-              <Badge variant={healthData?.database === 'CONNECTED' ? 'success' : 'warning'} pill>
-                {healthLoading ? 'Pinging...' : healthData?.database || 'UNKNOWN'}
-              </Badge>
-            </div>
-            <div className="h4 fw-bold text-dark mb-1">MySQL 8.0</div>
-            <div className="text-muted small">
-              Pool: 20 conns &bull; Schema: <code>industryone_erp</code>
-            </div>
-          </div>
+          <StatCard
+            title="Database Connection"
+            value="MySQL 8.0"
+            subtitle={`Pool: 20 conns • Status: ${healthData?.database || 'UNKNOWN'}`}
+            icon="🗄️"
+            variant="success"
+            trend={{ value: 'Connected', isPositive: healthData?.database === 'CONNECTED' }}
+            loading={healthLoading}
+          />
         </div>
 
         <div className="col-md-12 col-xl-4">
-          <div className="card shadow-sm h-100 p-3">
-            <div className="d-flex justify-content-between align-items-center mb-2">
-              <span className="text-secondary small fw-medium text-uppercase">Next.js Client Shell</span>
-              <Badge variant="success" pill>Active</Badge>
-            </div>
-            <div className="h4 fw-bold text-dark mb-1">Port 3000</div>
-            <div className="text-muted small">
-              Layout: Enterprise Shell &bull; Router: Pages Router
-            </div>
-          </div>
+          <StatCard
+            title="Next.js Client Shell"
+            value="Port 3000"
+            subtitle="Reusable UI Component System Active"
+            icon="⚛️"
+            variant="info"
+            trend={{ value: 'Live', isPositive: true }}
+          />
         </div>
       </div>
 
